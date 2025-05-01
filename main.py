@@ -122,7 +122,7 @@ def display_badge_data():
         # Open a new window for the control table
         new_window = tk.Toplevel(root)
         new_window.title(f"Sicil Numarası: {badge_number}")
-        new_window.geometry("600x400")
+        new_window.geometry("900x600")
 
         # Add a Treeview in the new window
         columns = ("Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
@@ -167,7 +167,7 @@ def display_badge_data():
 # Interface setup
 root = tk.Tk()
 root.title("Çalışma Süresi Hesaplayıcı")
-root.geometry("600x500")
+root.geometry("600x400")
 
 tk.Label(root, text="Giriş Saati (HH:MM):", font=("Helvetica", 11, "bold")).pack(pady=5)
 entry_input = tk.Entry(root)
