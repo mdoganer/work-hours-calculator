@@ -3,12 +3,10 @@ from tkinter import messagebox, simpledialog, ttk
 from datetime import datetime, timedelta
 import json
 import os
-from pathlib import Path
-import platform
 from control_json import json_open, filter_by_badge  # Import functions from json-test.py
 from utils import get_file_path  # Import the global get_file_path function
 
-veri_cache = {
+data_cache = {
     "entry": None,
     "exit": None,
     "net_duration": None
@@ -53,13 +51,13 @@ def calculate_work_hours(entry_time, exit_time, is_weekday):
     net_duration = work_duration - lunch_duration
 
 
-    veri_cache["entry"] = entry_dt
-    veri_cache["exit"] = exit_dt
-    veri_cache["net_duration"] = net_duration
+    data_cache["entry"] = entry_dt
+    data_cache["exit"] = exit_dt
+    data_cache["net_duration"] = net_duration
     return round(net_duration.total_seconds() / 3600, 2)
 
 
-def hesapla():
+def calculate():
     entry = entry_input.get()
     exit = exit_input.get()
     is_weekday = weekday_var.get()
@@ -67,7 +65,7 @@ def hesapla():
     rounded_exit = round_time(datetime.strptime(exit, "%H:%M"))
     try:
         sonuc = calculate_work_hours(entry, exit, is_weekday == "Hafta İçi")
-        sonuc_label.config(
+        result_label.config(
             text=f"Net Çalışma Süresi: {sonuc}\n"
                  f"Giriş (yuvarlanmış): {rounded_entry.strftime('%H:%M')}\n"
                  f"Çıkış (yuvarlanmış): {rounded_exit.strftime('%H:%M')}"
@@ -78,7 +76,7 @@ def hesapla():
 
 def save_json():
     try:
-        if not veri_cache["entry"] or not veri_cache["exit"] or not veri_cache["net_duration"]:
+        if not data_cache["entry"] or not data_cache["exit"] or not data_cache["net_duration"]:
             messagebox.showwarning("Uyarı", "Lütfen önce HESAPLA butonuna basın.")
             return
         sicil_no = simpledialog.askstring("Sicil Numarası", "Sicil numaranızı giriniz:")
@@ -91,9 +89,9 @@ def save_json():
         kayit = {
             "sicil": sicil_no,
             "tarih": date,
-            "giris": veri_cache["entry"].strftime("%H:%M"),
-            "cikis": veri_cache["exit"].strftime("%H:%M"),
-            "net_calisma": veri_cache["net_duration"].total_seconds() / 3600
+            "giris": data_cache["entry"].strftime("%H:%M"),
+            "cikis": data_cache["exit"].strftime("%H:%M"),
+            "net_calisma": data_cache["net_duration"].total_seconds() / 3600
         }
 
         # Get the universal file path
@@ -166,7 +164,7 @@ def display_badge_data():
     except Exception as e:
         messagebox.showerror("Hata", f"Veri görüntüleme sırasında bir hata oluştu:\n{e}")
 
-# Arayüz
+# Interface setup
 root = tk.Tk()
 root.title("Çalışma Süresi Hesaplayıcı")
 root.geometry("600x500")
@@ -187,18 +185,18 @@ tk.Radiobutton(root, text="Hafta Sonu", variable=weekday_var, value="Hafta Sonu"
 button_frame = tk.Frame(root)
 button_frame.pack(pady=10)
 
-hesapla_button = tk.Button(button_frame, text="Hesapla", command=hesapla)
-hesapla_button.grid(row=0, column=0, padx=10)
+calculate_button = tk.Button(button_frame, text="Hesapla", command=calculate)
+calculate_button.grid(row=0, column=0, padx=10)
 
-kayit_button = tk.Button(button_frame, text="Kaydet", command=save_json)
-kayit_button.grid(row=0, column=1, padx=10)
+save_button = tk.Button(button_frame, text="Kaydet", command=save_json)
+save_button.grid(row=0, column=1, padx=10)
 
 control_button = tk.Button(button_frame, text="Sicil Kontrol", command=display_badge_data)
 control_button.grid(row=0, column=2, padx=10)
 
-# Sonuç label
-sonuc_label = tk.Label(root, text="", font=("Helvetica", 10), justify="left")
-sonuc_label.pack(pady=10)
+# Result label
+result_label = tk.Label(root, text="", font=("Helvetica", 10), justify="left")
+result_label.pack(pady=10)
 
 # Footer
 footer = tk.Label(root, text="Developed by MMD", font=("Arial", 8), fg="gray")
