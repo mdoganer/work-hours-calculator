@@ -12,6 +12,8 @@ data_cache = {
     "net_duration": None
 } 
 
+badge_window = None  # Global variable to track the badge window
+
 def round_time(dt):
     minute = dt.minute
     if minute < 8:
@@ -114,24 +116,40 @@ def save_json():
         messagebox.showerror("Hata", f"Kayıt sırasında bir hata oluştu:\n{e}")
 
 def display_badge_data():
+    global badge_window
+    
+    # If window already exists, bring it to front instead of creating a new one
+    if badge_window is not None and badge_window.winfo_exists():
+        badge_window.lift()  # Bring existing window to front
+        return
+        
     try:
         badge_number = simpledialog.askstring("Sicil Numarası", "Lütfen sicil numarasını girin:")
         if not badge_number:
             return
 
-        # Open a new window for the control table
-        new_window = tk.Toplevel(root)
-        new_window.title(f"Sicil Numarası: {badge_number}")
-        new_window.geometry("900x600")
+        # Create a new window for the control table
+        badge_window = tk.Toplevel(root)
+        badge_window.title(f"Sicil Numarası: {badge_number}")
+        badge_window.geometry("900x600")
 
         # Add a Treeview in the new window
         columns = ("Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
-        tree = ttk.Treeview(new_window, columns=columns, show="headings", height=10)
+        tree = ttk.Treeview(badge_window, columns=columns, show="headings", height=10)
         tree.heading("Tarih", text="Tarih")
         tree.heading("Giriş", text="Giriş")
         tree.heading("Çıkış", text="Çıkış")
         tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
         tree.pack(pady=10, fill="both", expand=True)
+
+        # Track window closure to reset the global variable
+        def on_window_close():
+            global badge_window
+            badge_window = None
+            badge_window_temp.destroy()
+            
+        badge_window_temp = badge_window
+        badge_window.protocol("WM_DELETE_WINDOW", on_window_close)
 
         # Function to refresh the table
         def refresh_table():
@@ -158,7 +176,7 @@ def display_badge_data():
         refresh_table()
 
         # Add a refresh button below the table
-        refresh_button = tk.Button(new_window, text="Yenile", command=refresh_table)
+        refresh_button = tk.Button(badge_window, text="Yenile", command=refresh_table)
         refresh_button.pack(pady=5)
 
     except Exception as e:
