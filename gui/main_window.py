@@ -8,6 +8,7 @@ from gui.menu import MenuBuilder
 from gui.dialogs import BadgeDataDialog, JsonDataDialog
 from core.time_calc import round_time, calculate_work_hours
 from core.data import save_record, load_records, create_new_file, open_json_file
+from utils.file_utils import set_custom_file_path
 
 class MainWindow:
     def __init__(self):
@@ -207,6 +208,9 @@ class MainWindow:
                 
             create_new_file(file_path)
             
+            # Set the custom file path globally
+            set_custom_file_path(file_path)
+            
             # Store the current file path and update window title
             self.current_file_path = file_path
             file_name = os.path.basename(file_path)
@@ -228,6 +232,9 @@ class MainWindow:
                 return
                 
             data = open_json_file(file_path)
+            
+            # Set the custom file path globally
+            set_custom_file_path(file_path)
             
             # Store the current file path and update window title
             self.current_file_path = file_path
