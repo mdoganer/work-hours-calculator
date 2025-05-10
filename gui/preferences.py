@@ -6,6 +6,7 @@ import os
 import platform
 from pathlib import Path
 from utils.languages import language_manager, _
+from utils.file_utils import get_file_path
 
 class PreferencesManager:
     """Manage application preferences."""
@@ -13,6 +14,7 @@ class PreferencesManager:
     DEFAULT_PREFERENCES = {
         "language": "tr",  # Default language (Turkish)
         "rounding_algorithm": "standard",  # Standard 15-minute rounding
+        "file_path": None,  # Default file path will be handled by get_file_path
         "breaks": {
             "weekday": {
                 "lunch": {"start_time": "13:00", "end_time": "13:45", "enabled": True},
@@ -36,10 +38,10 @@ class PreferencesManager:
         # Use different paths based on the operating system
         if platform.system() == "Windows":
             # Store preferences in AppData\Local for Windows
-            app_dir = Path.home() / "AppData" / "Local" / "CalismaSaatiHesaplama"
+            app_dir = Path.home() / "AppData" / "Local" / "WorkHoursCalculator"
         else:
-            # Store preferences in ~/.calisma_saati_hesaplama for Linux/Mac
-            app_dir = Path.home() / ".calisma_saati_hesaplama"
+            # Store preferences in ~/.work_hours_calculator for Linux/Mac
+            app_dir = Path.home() / ".work_hours_calculator"
         
         # Create directory if it doesn't exist
         app_dir.mkdir(exist_ok=True, parents=True)
@@ -119,6 +121,13 @@ class PreferencesManager:
             "enabled": enabled
         }
         return self.save_preferences()
+    
+    def get_record_file_path(self):
+        """Get the path to the records file."""
+        custom_path = self.get("file_path")
+        if custom_path:
+            return Path(custom_path)
+        return get_file_path()
 
 class PreferencesDialog:
     """Dialog for editing application preferences."""
@@ -187,6 +196,30 @@ class PreferencesDialog:
             rb = tk.Radiobutton(lang_frame, text=name, value=code, variable=self.lang_var)
             rb.pack(anchor="w")
         
+        # Working Records File Path selection
+        file_path_frame = tk.LabelFrame(tab, text=_("file_path", "Records File Path"), padx=10, pady=10)
+        file_path_frame.pack(fill="x", padx=10, pady=10)
+        
+        # Get current file path
+        current_path = self.prefs.get("file_path")
+        self.file_path_var = tk.StringVar(value=current_path if current_path else "")
+        
+        # Create a frame for the file path display and browse button
+        file_display_frame = tk.Frame(file_path_frame)
+        file_display_frame.pack(fill="x", pady=5)
+        
+        # File path entry (readonly)
+        file_path_entry = tk.Entry(file_display_frame, textvariable=self.file_path_var, width=30)
+        file_path_entry.pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 5))
+        
+        # Browse button
+        browse_button = tk.Button(file_display_frame, text=_("browse", "Browse..."), command=self.browse_file)
+        browse_button.pack(side=tk.LEFT)
+        
+        # Reset to default button
+        reset_button = tk.Button(file_path_frame, text=_("reset_to_default", "Reset to Default"), command=self.reset_file_path)
+        reset_button.pack(anchor="e", pady=5)
+        
         # Rounding algorithm selection
         round_frame = tk.LabelFrame(tab, text=_("preferences_rounding"), padx=10, pady=10)
         round_frame.pack(fill="x", padx=10, pady=10)
@@ -205,6 +238,23 @@ class PreferencesDialog:
         for code, name in algorithms.items():
             rb = tk.Radiobutton(round_frame, text=name, value=code, variable=self.round_var)
             rb.pack(anchor="w")
+            
+    def browse_file(self):
+        """Browse for a record file."""
+        from tkinter import filedialog
+        
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[(_("json_files", "JSON files"), "*.json"), (_("all_files", "All files"), "*.*")],
+            title=_("select_record_file", "Select Records File")
+        )
+        
+        if file_path:  # If a file was selected (not cancelled)
+            self.file_path_var.set(file_path)
+            
+    def reset_file_path(self):
+        """Reset file path to default."""
+        self.file_path_var.set("")
     
     def setup_breaks_tab(self, tab, is_weekday):
         """Set up the breaks configuration tab."""
@@ -319,6 +369,9 @@ class PreferencesDialog:
         
         self.prefs.set("language", new_language)
         self.prefs.set("rounding_algorithm", self.round_var.get())
+        
+        # Save file path preference
+        self.prefs.set("file_path", self.file_path_var.get())
         
         # Save weekday break settings
         self.prefs.set_break_info(

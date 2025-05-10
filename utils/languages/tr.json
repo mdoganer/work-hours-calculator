@@ -46,6 +46,11 @@
     "preferences_cancel": "İptal",
     "preferences_language": "Dil",
     "preferences_rounding": "Yuvarlatma Algoritması",
+    "preferences_file_path": "Kayıt Dosyası",
+    "preferences_file_path_label": "Çalışma Kayıtları Dosya Yolu:",
+    "preferences_file_path_button": "Dosya Seç",
+    "preferences_file_path_default": "Varsayılan",
+    "preferences_file_path_custom": "Özel",
     "invalid_time": "Geçersiz Saat",
     "invalid_time_format": "geçersiz saat formatı. Lütfen HH:MM formatını kullanın.",
     "info": "Bilgi",
@@ -83,5 +88,9 @@
     "delete_confirmation": "Bu kaydı silmek istediğinizden emin misiniz?",
     "unsaved_changes": "Kaydedilmemiş değişiklikler",
     "save_changes_question": "Değişiklikleri kaydetmek istiyor musunuz?",
-    "about_app": "Çalışma Saati Hesaplama uygulaması, çalışma saatlerinizi takip etmenize ve hesaplamanıza yardımcı olur."
+    "about_app": "Çalışma Saati Hesaplama uygulaması, çalışma saatlerinizi takip etmenize ve hesaplamanıza yardımcı olur.",
+    "file_path": "Kayıt Dosya Yolu",
+    "browse": "Gözat...",
+    "select_record_file": "Kayıt Dosyasını Seç",
+    "reset_to_default": "Varsayılana Döndür"
 }

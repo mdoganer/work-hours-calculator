@@ -41,7 +41,7 @@
     "badge_control_title": "Badge Control",
     "record_cancelled": "Record cancelled.",
     "record_success": "Record saved successfully.",
-    "file_path": "File Path:",
+    "file_path": "Records File Path",
     "preferences_title": "Preferences",
     "preferences_general": "General",
     "preferences_weekday_breaks": "Weekday Breaks",
@@ -117,5 +117,8 @@
     "confirmation": "Confirmation",
     "unsaved_changes": "Unsaved Changes",
     "save_changes_question": "Do you want to save your changes?",
-    "about_app": "The Working Hours Calculator application helps you track and calculate your working hours."
+    "about_app": "The Working Hours Calculator application helps you track and calculate your working hours.",
+    "browse": "Browse...",
+    "select_record_file": "Select Records File",
+    "reset_to_default": "Reset to Default"
 }
