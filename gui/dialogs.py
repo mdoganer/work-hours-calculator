@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import os
 from core.data import filter_by_badge
+from utils.languages import _
 
 class BadgeDataDialog:
     def __init__(self, parent, badge_number, data_provider, on_close=None):
@@ -11,7 +12,7 @@ class BadgeDataDialog:
         self.data_provider = data_provider
         self.window = None
         self.on_close = on_close
-        self.show_all = badge_number == "tüm kayıtlar"  # Check if we should show all records
+        self.show_all = badge_number == _("all_records", "tüm kayıtlar")  # Check if we should show all records
         
     def show(self):
         # If window already exists, bring it to front
@@ -22,9 +23,9 @@ class BadgeDataDialog:
         # Create a new window for the control table
         self.window = tk.Toplevel(self.parent)
         if self.show_all:
-            self.window.title("Sicil Kontrol")
+            self.window.title(_("badge_control_title", "Sicil Kontrol"))
         else:
-            self.window.title(f"Sicil Numarası: {self.badge_number}")
+            self.window.title(f"{_('badge', 'Sicil Numarası')}: {self.badge_number}")
         self.window.geometry("900x600")
 
         # Add a search frame if we're showing all records
@@ -32,7 +33,7 @@ class BadgeDataDialog:
             search_frame = tk.Frame(self.window)
             search_frame.pack(fill="x", padx=10, pady=5)
             
-            tk.Label(search_frame, text="Sicil Ara:").pack(side=tk.LEFT, padx=5)
+            tk.Label(search_frame, text=_("search_badge", "Sicil Ara:")).pack(side=tk.LEFT, padx=5)
             self.search_entry = tk.Entry(search_frame, width=15)
             self.search_entry.pack(side=tk.LEFT, padx=5)
             self.search_entry.bind("<KeyRelease>", self.filter_records)
@@ -43,33 +44,35 @@ class BadgeDataDialog:
 
         # Add a Treeview in the new window
         if self.show_all:
-            columns = ("Sicil", "Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
+            columns = (_("badge", "Sicil"), _("date", "Tarih"), _("entry", "Giriş"), 
+                      _("exit", "Çıkış"), _("net_work_hours", "Net Çalışma (Saat)"))
         else:
-            columns = ("Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
+            columns = (_("date", "Tarih"), _("entry", "Giriş"), 
+                      _("exit", "Çıkış"), _("net_work_hours", "Net Çalışma (Saat)"))
             
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings")
         
         # Configure columns
         if self.show_all:
-            self.tree.heading("Sicil", text="Sicil")
-            self.tree.column("Sicil", width=80)
-            self.tree.heading("Tarih", text="Tarih")
-            self.tree.column("Tarih", width=100)
-            self.tree.heading("Giriş", text="Giriş")
-            self.tree.column("Giriş", width=80)
-            self.tree.heading("Çıkış", text="Çıkış")
-            self.tree.column("Çıkış", width=80)
-            self.tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
-            self.tree.column("Net Çalışma (Saat)", width=120)
+            self.tree.heading(_("badge", "Sicil"), text=_("badge", "Sicil"))
+            self.tree.column(_("badge", "Sicil"), width=80)
+            self.tree.heading(_("date", "Tarih"), text=_("date", "Tarih"))
+            self.tree.column(_("date", "Tarih"), width=100)
+            self.tree.heading(_("entry", "Giriş"), text=_("entry", "Giriş"))
+            self.tree.column(_("entry", "Giriş"), width=80)
+            self.tree.heading(_("exit", "Çıkış"), text=_("exit", "Çıkış"))
+            self.tree.column(_("exit", "Çıkış"), width=80)
+            self.tree.heading(_("net_work_hours", "Net Çalışma (Saat)"), text=_("net_work_hours", "Net Çalışma (Saat)"))
+            self.tree.column(_("net_work_hours", "Net Çalışma (Saat)"), width=120)
         else:
-            self.tree.heading("Tarih", text="Tarih")
-            self.tree.column("Tarih", width=100)
-            self.tree.heading("Giriş", text="Giriş")
-            self.tree.column("Giriş", width=80)
-            self.tree.heading("Çıkış", text="Çıkış")
-            self.tree.column("Çıkış", width=80)
-            self.tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
-            self.tree.column("Net Çalışma (Saat)", width=120)
+            self.tree.heading(_("date", "Tarih"), text=_("date", "Tarih"))
+            self.tree.column(_("date", "Tarih"), width=100)
+            self.tree.heading(_("entry", "Giriş"), text=_("entry", "Giriş"))
+            self.tree.column(_("entry", "Giriş"), width=80)
+            self.tree.heading(_("exit", "Çıkış"), text=_("exit", "Çıkış"))
+            self.tree.column(_("exit", "Çıkış"), width=80)
+            self.tree.heading(_("net_work_hours", "Net Çalışma (Saat)"), text=_("net_work_hours", "Net Çalışma (Saat)"))
+            self.tree.column(_("net_work_hours", "Net Çalışma (Saat)"), width=120)
         
         # Add scrollbars
         vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
@@ -90,11 +93,11 @@ class BadgeDataDialog:
         buttons_frame.pack(pady=5, fill="x")
         
         # Add a refresh button
-        refresh_button = tk.Button(buttons_frame, text="Yenile", command=self.refresh_table)
+        refresh_button = tk.Button(buttons_frame, text=_("refresh", "Yenile"), command=self.refresh_table)
         refresh_button.pack(side=tk.LEFT, padx=10)
         
         # Add delete button with default state disabled
-        self.delete_button = tk.Button(buttons_frame, text="Seçili Kaydı Sil", 
+        self.delete_button = tk.Button(buttons_frame, text=_("delete_selected", "Seçili Kaydı Sil"), 
                                       command=self.delete_selected, state=tk.DISABLED)
         self.delete_button.pack(side=tk.LEFT, padx=10)
         
@@ -113,7 +116,7 @@ class BadgeDataDialog:
     def create_context_menu(self):
         """Create a context menu for right-click actions on rows."""
         self.context_menu = tk.Menu(self.window, tearoff=0)
-        self.context_menu.add_command(label="Sil", command=self.delete_selected)
+        self.context_menu.add_command(label=_("delete", "Sil"), command=self.delete_selected)
         
         # Bind right-click to show context menu
         self.tree.bind("<Button-3>", self.show_context_menu)
@@ -150,7 +153,7 @@ class BadgeDataDialog:
         values = self.tree.item(selected[0], 'values')
         
         # Confirm deletion
-        if not messagebox.askyesno("Onay", "Seçili kaydı silmek istediğinizden emin misiniz?"):
+        if not messagebox.askyesno(_("confirmation", "Onay"), _("delete_confirm", "Seçili kaydı silmek istediğinizden emin misiniz?")):
             return
             
         try:
@@ -175,7 +178,7 @@ class BadgeDataDialog:
             if success:
                 # Remove from treeview
                 self.tree.delete(selected)
-                messagebox.showinfo("Başarılı", "Kayıt başarıyla silindi.")
+                messagebox.showinfo(_("success", "Başarılı"), _("record_deleted", "Kayıt başarıyla silindi."))
                 
                 # If we're showing all records and have filtered, refresh all_records
                 if self.show_all and hasattr(self, 'all_records'):
@@ -186,9 +189,9 @@ class BadgeDataDialog:
                                              r.get('cikis') == cikis)]
                     
             else:
-                messagebox.showerror("Hata", "Kayıt silinemedi.")
+                messagebox.showerror(_("error", "Hata"), _("record_delete_error", "Kayıt silinemedi."))
         except Exception as e:
-            messagebox.showerror("Hata", f"Kayıt silme sırasında bir hata oluştu:\n{e}")
+            messagebox.showerror(_("error", "Hata"), f"{_('error_delete', 'Kayıt silme sırasında bir hata oluştu:')}\n{e}")
     
     def _on_window_close(self):
         # Call the on_close callback if provided
@@ -261,10 +264,10 @@ class BadgeDataDialog:
 
             # Show a message if no data is found
             if not filtered_data and not self.show_all:
-                messagebox.showinfo("Bilgi", f"Sicil Numarası {self.badge_number} için kayıt bulunamadı.")
+                messagebox.showinfo(_("info", "Bilgi"), _("no_records", "Sicil Numarası {0} için kayıt bulunamadı.").format(self.badge_number))
                 
         except Exception as e:
-            messagebox.showerror("Hata", f"Tablo yenilenirken bir hata oluştu:\n{e}")
+            messagebox.showerror(_("error", "Hata"), f"{_('error_table_refresh', 'Tablo yenilenirken bir hata oluştu:')}\n{e}")
 
 class JsonDataDialog:
     def __init__(self, parent, data, file_path):
@@ -279,13 +282,14 @@ class JsonDataDialog:
         window.geometry("800x600")
         
         # Add a Treeview in the new window
-        columns = ("Sicil", "Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
+        columns = (_("badge", "Sicil"), _("date", "Tarih"), _("entry", "Giriş"), 
+                  _("exit", "Çıkış"), _("net_work_hours", "Net Çalışma (Saat)"))
         tree = ttk.Treeview(window, columns=columns, show="headings", height=20)
-        tree.heading("Sicil", text="Sicil")
-        tree.heading("Tarih", text="Tarih")
-        tree.heading("Giriş", text="Giriş")
-        tree.heading("Çıkış", text="Çıkış")
-        tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
+        tree.heading(_("badge", "Sicil"), text=_("badge", "Sicil"))
+        tree.heading(_("date", "Tarih"), text=_("date", "Tarih"))
+        tree.heading(_("entry", "Giriş"), text=_("entry", "Giriş"))
+        tree.heading(_("exit", "Çıkış"), text=_("exit", "Çıkış"))
+        tree.heading(_("net_work_hours", "Net Çalışma (Saat)"), text=_("net_work_hours", "Net Çalışma (Saat)"))
         
         # Add scrollbars
         vsb = ttk.Scrollbar(window, orient="vertical", command=tree.yview)

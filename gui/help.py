@@ -243,7 +243,9 @@ class HelpDialog:
             
         # Create a new window for help
         self.window = tk.Toplevel(self.parent)
-        self.window.title("Yardım / Help")
+        language = preferences.get("language", "tr")
+        help_title = "Help" if language == "en" else "Yardım"
+        self.window.title(help_title)
         self.window.geometry("700x500")
         self.window.minsize(600, 400)
         

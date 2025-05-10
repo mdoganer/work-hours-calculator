@@ -5,6 +5,7 @@ import json
 import os
 import platform
 from pathlib import Path
+from utils.languages import language_manager, _
 
 class PreferencesManager:
     """Manage application preferences."""
@@ -26,6 +27,9 @@ class PreferencesManager:
     
     def __init__(self):
         self.preferences = self.load_preferences()
+        # Set the language based on preferences
+        if "language" in self.preferences:
+            language_manager.set_language(self.preferences["language"])
     
     def get_preferences_path(self):
         """Get the path to the preferences file."""
@@ -71,6 +75,9 @@ class PreferencesManager:
     def set(self, key, value):
         """Set a preference value."""
         self.preferences[key] = value
+        # If language is changed, update the language manager
+        if key == "language":
+            language_manager.set_language(value)
         return self.save_preferences()
         
     def get_break_info(self, break_type, is_weekday=True):
@@ -129,7 +136,7 @@ class PreferencesDialog:
             
         # Create a new window for preferences
         self.window = tk.Toplevel(self.parent)
-        self.window.title("Tercihler")
+        self.window.title(_("preferences_title"))
         self.window.geometry("500x550")
         self.window.resizable(False, False)
         
@@ -142,9 +149,9 @@ class PreferencesDialog:
         weekday_breaks_tab = ttk.Frame(notebook)
         weekend_breaks_tab = ttk.Frame(notebook)
         
-        notebook.add(general_tab, text="Genel")
-        notebook.add(weekday_breaks_tab, text="Hafta İçi Molaları")
-        notebook.add(weekend_breaks_tab, text="Hafta Sonu Molaları")
+        notebook.add(general_tab, text=_("preferences_general"))
+        notebook.add(weekday_breaks_tab, text=_("preferences_weekday_breaks"))
+        notebook.add(weekend_breaks_tab, text=_("preferences_weekend_breaks"))
         
         # Populate general tab
         self.setup_general_tab(general_tab)
@@ -157,16 +164,16 @@ class PreferencesDialog:
         button_frame = tk.Frame(self.window)
         button_frame.pack(fill="x", padx=10, pady=(0, 10))
         
-        save_button = tk.Button(button_frame, text="Kaydet", command=self.save_preferences)
+        save_button = tk.Button(button_frame, text=_("preferences_save"), command=self.save_preferences)
         save_button.pack(side=tk.RIGHT, padx=5)
         
-        cancel_button = tk.Button(button_frame, text="İptal", command=self.window.destroy)
+        cancel_button = tk.Button(button_frame, text=_("preferences_cancel"), command=self.window.destroy)
         cancel_button.pack(side=tk.RIGHT, padx=5)
         
     def setup_general_tab(self, tab):
         """Set up the general preferences tab."""
         # Language selection
-        lang_frame = tk.LabelFrame(tab, text="Dil", padx=10, pady=10)
+        lang_frame = tk.LabelFrame(tab, text=_("preferences_language"), padx=10, pady=10)
         lang_frame.pack(fill="x", padx=10, pady=10)
         
         self.lang_var = tk.StringVar(value=self.prefs.get("language"))
@@ -181,18 +188,18 @@ class PreferencesDialog:
             rb.pack(anchor="w")
         
         # Rounding algorithm selection
-        round_frame = tk.LabelFrame(tab, text="Yuvarlama Algoritması", padx=10, pady=10)
+        round_frame = tk.LabelFrame(tab, text=_("preferences_rounding"), padx=10, pady=10)
         round_frame.pack(fill="x", padx=10, pady=10)
         
         self.round_var = tk.StringVar(value=self.prefs.get("rounding_algorithm"))
         
         algorithms = {
-            "standard": "Standart (15 dakika)",
-            "nearest_5": "En yakın 5 dakika",
-            "nearest_10": "En yakın 10 dakika",
-            "nearest_30": "En yakın 30 dakika",  # New 30-minute rounding option
-            "ceiling": "Yukarı yuvarlama (tavan)",
-            "floor": "Aşağı yuvarlama (taban)"
+            "standard": _("rounding_standard"),
+            "nearest_5": _("rounding_nearest_5"),
+            "nearest_10": _("rounding_nearest_10"),
+            "nearest_30": _("rounding_nearest_30"),  # New 30-minute rounding option
+            "ceiling": _("rounding_ceiling"),
+            "floor": _("rounding_floor")
         }
         
         for code, name in algorithms.items():
@@ -201,10 +208,10 @@ class PreferencesDialog:
     
     def setup_breaks_tab(self, tab, is_weekday):
         """Set up the breaks configuration tab."""
-        day_type = "Hafta İçi" if is_weekday else "Hafta Sonu"
+        day_type = _("weekday") if is_weekday else _("weekend")
         
         # Lunch break configuration
-        lunch_frame = tk.LabelFrame(tab, text=f"{day_type} Öğle Molası", padx=10, pady=10)
+        lunch_frame = tk.LabelFrame(tab, text=f"{day_type} {_('lunch_break')}", padx=10, pady=10)
         lunch_frame.pack(fill="x", padx=10, pady=10)
         
         # Get current lunch break settings
@@ -216,16 +223,16 @@ class PreferencesDialog:
         # Enabled checkbox
         if is_weekday:
             self.weekday_lunch_enabled_var = tk.BooleanVar(value=lunch_enabled)
-            lunch_cb = tk.Checkbutton(lunch_frame, text="Öğle Molasını Etkinleştir", 
+            lunch_cb = tk.Checkbutton(lunch_frame, text=_("enable_lunch"), 
                                     variable=self.weekday_lunch_enabled_var)
         else:
             self.weekend_lunch_enabled_var = tk.BooleanVar(value=lunch_enabled)
-            lunch_cb = tk.Checkbutton(lunch_frame, text="Öğle Molasını Etkinleştir", 
+            lunch_cb = tk.Checkbutton(lunch_frame, text=_("enable_lunch"), 
                                     variable=self.weekend_lunch_enabled_var)
         lunch_cb.grid(row=0, column=0, columnspan=2, sticky="w")
         
         # Start time
-        tk.Label(lunch_frame, text="Başlangıç:").grid(row=1, column=0, sticky="w", pady=5)
+        tk.Label(lunch_frame, text=_("start_time")).grid(row=1, column=0, sticky="w", pady=5)
         if is_weekday:
             self.weekday_lunch_start_var = tk.StringVar(value=lunch_start)
             lunch_start_entry = tk.Entry(lunch_frame, textvariable=self.weekday_lunch_start_var, width=10)
@@ -235,7 +242,7 @@ class PreferencesDialog:
         lunch_start_entry.grid(row=1, column=1, sticky="w", padx=10)
         
         # End time
-        tk.Label(lunch_frame, text="Bitiş:").grid(row=2, column=0, sticky="w", pady=5)
+        tk.Label(lunch_frame, text=_("end_time")).grid(row=2, column=0, sticky="w", pady=5)
         if is_weekday:
             self.weekday_lunch_end_var = tk.StringVar(value=lunch_end)
             lunch_end_entry = tk.Entry(lunch_frame, textvariable=self.weekday_lunch_end_var, width=10)
@@ -245,7 +252,7 @@ class PreferencesDialog:
         lunch_end_entry.grid(row=2, column=1, sticky="w", padx=10)
         
         # Dinner break configuration
-        dinner_frame = tk.LabelFrame(tab, text=f"{day_type} Akşam Molası", padx=10, pady=10)
+        dinner_frame = tk.LabelFrame(tab, text=f"{day_type} {_('dinner_break')}", padx=10, pady=10)
         dinner_frame.pack(fill="x", padx=10, pady=10)
         
         # Get current dinner break settings
@@ -257,16 +264,16 @@ class PreferencesDialog:
         # Enabled checkbox
         if is_weekday:
             self.weekday_dinner_enabled_var = tk.BooleanVar(value=dinner_enabled)
-            dinner_cb = tk.Checkbutton(dinner_frame, text="Akşam Molasını Etkinleştir", 
+            dinner_cb = tk.Checkbutton(dinner_frame, text=_("enable_dinner"), 
                                      variable=self.weekday_dinner_enabled_var)
         else:
             self.weekend_dinner_enabled_var = tk.BooleanVar(value=dinner_enabled)
-            dinner_cb = tk.Checkbutton(dinner_frame, text="Akşam Molasını Etkinleştir", 
+            dinner_cb = tk.Checkbutton(dinner_frame, text=_("enable_dinner"), 
                                      variable=self.weekend_dinner_enabled_var)
         dinner_cb.grid(row=0, column=0, columnspan=2, sticky="w")
         
         # Start time
-        tk.Label(dinner_frame, text="Başlangıç:").grid(row=1, column=0, sticky="w", pady=5)
+        tk.Label(dinner_frame, text=_("start_time")).grid(row=1, column=0, sticky="w", pady=5)
         if is_weekday:
             self.weekday_dinner_start_var = tk.StringVar(value=dinner_start)
             dinner_start_entry = tk.Entry(dinner_frame, textvariable=self.weekday_dinner_start_var, width=10)
@@ -276,7 +283,7 @@ class PreferencesDialog:
         dinner_start_entry.grid(row=1, column=1, sticky="w", padx=10)
         
         # End time
-        tk.Label(dinner_frame, text="Bitiş:").grid(row=2, column=0, sticky="w", pady=5)
+        tk.Label(dinner_frame, text=_("end_time")).grid(row=2, column=0, sticky="w", pady=5)
         if is_weekday:
             self.weekday_dinner_end_var = tk.StringVar(value=dinner_end)
             dinner_end_entry = tk.Entry(dinner_frame, textvariable=self.weekday_dinner_end_var, width=10)
@@ -289,26 +296,28 @@ class PreferencesDialog:
         """Save preferences and close the dialog."""
         # Validate time formats
         time_fields = {
-            "Hafta İçi Öğle Molası Başlangıç": self.weekday_lunch_start_var.get(),
-            "Hafta İçi Öğle Molası Bitiş": self.weekday_lunch_end_var.get(),
-            "Hafta İçi Akşam Molası Başlangıç": self.weekday_dinner_start_var.get(),
-            "Hafta İçi Akşam Molası Bitiş": self.weekday_dinner_end_var.get(),
-            "Hafta Sonu Öğle Molası Başlangıç": self.weekend_lunch_start_var.get(),
-            "Hafta Sonu Öğle Molası Bitiş": self.weekend_lunch_end_var.get(),
-            "Hafta Sonu Akşam Molası Başlangıç": self.weekend_dinner_start_var.get(),
-            "Hafta Sonu Akşam Molası Bitiş": self.weekend_dinner_end_var.get()
+            f"{_('weekday')} {_('lunch_break')} {_('start_time')}": self.weekday_lunch_start_var.get(),
+            f"{_('weekday')} {_('lunch_break')} {_('end_time')}": self.weekday_lunch_end_var.get(),
+            f"{_('weekday')} {_('dinner_break')} {_('start_time')}": self.weekday_dinner_start_var.get(),
+            f"{_('weekday')} {_('dinner_break')} {_('end_time')}": self.weekday_dinner_end_var.get(),
+            f"{_('weekend')} {_('lunch_break')} {_('start_time')}": self.weekend_lunch_start_var.get(),
+            f"{_('weekend')} {_('lunch_break')} {_('end_time')}": self.weekend_lunch_end_var.get(),
+            f"{_('weekend')} {_('dinner_break')} {_('start_time')}": self.weekend_dinner_start_var.get(),
+            f"{_('weekend')} {_('dinner_break')} {_('end_time')}": self.weekend_dinner_end_var.get()
         }
         
         # Validate time format (HH:MM)
         for field_name, time_str in time_fields.items():
             if not self._is_valid_time_format(time_str):
-                messagebox.showerror("Geçersiz Zaman Formatı", 
-                                    f"{field_name}: {time_str} geçerli bir zaman değil.\n"
-                                    "Lütfen HH:MM formatında girin (örn: 13:45)")
+                messagebox.showerror(_("invalid_time"), 
+                                    f"{field_name}: {time_str} {_('invalid_time_format')}")
                 return
         
         # Save preferences
-        self.prefs.set("language", self.lang_var.get())
+        old_language = self.prefs.get("language")
+        new_language = self.lang_var.get()
+        
+        self.prefs.set("language", new_language)
         self.prefs.set("rounding_algorithm", self.round_var.get())
         
         # Save weekday break settings
@@ -346,8 +355,14 @@ class PreferencesDialog:
         )
         
         # Inform user and close window
-        messagebox.showinfo("Tercihler", "Tercihler başarıyla kaydedildi.")
+        messagebox.showinfo(_("info"), _("preferences_saved"))
         self.window.destroy()
+        
+        # If language changed, suggest a restart
+        if old_language != new_language:
+            messagebox.showinfo(_("info"), 
+                               "Dil değişikliği yapıldı. Değişikliklerin tam olarak uygulanması için uygulamayı yeniden başlatmanız önerilir.\n\n"
+                               "Language was changed. It is recommended to restart the application for changes to fully take effect.")
     
     def _is_valid_time_format(self, time_str):
         """Check if a string is in valid HH:MM format."""
