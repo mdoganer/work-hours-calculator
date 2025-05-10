@@ -48,7 +48,8 @@ class MainWindow:
             "paste": self.paste,
             "select_all": self.select_all,
             "calculate": self.calculate,
-            "badge_control": self.display_badge_data
+            "badge_control": self.display_badge_data,
+            "preferences": self.show_preferences
         }
         self.menu_builder = MenuBuilder(self.root, callbacks)
     
@@ -262,3 +263,9 @@ class MainWindow:
             messagebox.showerror("Hata", "Geçersiz JSON dosyası.")
         except Exception as e:
             messagebox.showerror("Hata", f"Dosya açılırken hata oluştu:\n{e}")
+
+    def show_preferences(self):
+        """Display the preferences dialog."""
+        from gui.preferences import PreferencesDialog, preferences
+        dialog = PreferencesDialog(self.root, preferences)
+        dialog.show()

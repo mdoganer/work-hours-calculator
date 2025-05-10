@@ -42,7 +42,7 @@ class MenuBuilder:
         tools_menu.add_command(label="Kaydet", command=self.callbacks["save"])
         tools_menu.add_command(label="Sicil Kontrol", command=self.callbacks["badge_control"])
         tools_menu.add_separator()
-        tools_menu.add_command(label="Seçenekler")
+        tools_menu.add_command(label="Tercihler", command=self.callbacks["preferences"])
         
     def create_help_menu(self):
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
