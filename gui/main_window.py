@@ -26,6 +26,9 @@ class MainWindow:
         # Current active file path
         self.current_file_path = None
         
+        # Track active badge dialog window
+        self.badge_dialog = None
+        
         # Setup UI components
         self.setup_menu()
         self.setup_interface()
@@ -188,12 +191,26 @@ class MainWindow:
             messagebox.showerror("Hata", f"Kayıt sırasında bir hata oluştu:\n{e}")
 
     def display_badge_data(self):
+        # Check if we already have an active badge dialog
+        if self.badge_dialog is not None and hasattr(self.badge_dialog, 'window') and self.badge_dialog.window is not None:
+            # If the window exists, bring it to front
+            if self.badge_dialog.window.winfo_exists():
+                self.badge_dialog.window.lift()
+                return
+            # If the window doesn't exist anymore, clear the reference
+            self.badge_dialog = None
+            
+        # No active dialog, proceed to create a new one
         badge_number = simpledialog.askstring("Sicil Numarası", "Lütfen sicil numarasını girin:")
         if not badge_number:
             return
+        
+        # Create callback function to clear dialog reference when window closes
+        def on_dialog_close():
+            self.badge_dialog = None
             
-        dialog = BadgeDataDialog(self.root, badge_number, load_records)
-        dialog.show()
+        self.badge_dialog = BadgeDataDialog(self.root, badge_number, load_records, on_close=on_dialog_close)
+        self.badge_dialog.show()
 
     def new_file(self):
         try:

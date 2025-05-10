@@ -5,11 +5,12 @@ import os
 from core.data import filter_by_badge
 
 class BadgeDataDialog:
-    def __init__(self, parent, badge_number, data_provider):
+    def __init__(self, parent, badge_number, data_provider, on_close=None):
         self.parent = parent
         self.badge_number = badge_number
         self.data_provider = data_provider
         self.window = None
+        self.on_close = on_close
         
     def show(self):
         # If window already exists, bring it to front
@@ -35,8 +36,20 @@ class BadgeDataDialog:
         refresh_button = tk.Button(self.window, text="Yenile", command=self.refresh_table)
         refresh_button.pack(pady=5)
         
+        # Set up window close event
+        self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
+        
         # Initial population of the Treeview
         self.refresh_table()
+    
+    def _on_window_close(self):
+        # Call the on_close callback if provided
+        if self.on_close:
+            self.on_close()
+        # Destroy the window
+        if self.window:
+            self.window.destroy()
+            self.window = None
         
     def refresh_table(self):
         try:
