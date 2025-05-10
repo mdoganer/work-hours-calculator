@@ -47,7 +47,7 @@ class MenuBuilder:
     def create_help_menu(self):
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Yardım", menu=help_menu)
-        help_menu.add_command(label="Yardım İçeriği")
+        help_menu.add_command(label="Yardım İçeriği", command=self.callbacks["help_content"])
         help_menu.add_command(label="Hakkında", 
                               command=lambda: messagebox.showinfo("Hakkında", 
                                                                   "Çalışma Süresi Hesaplayıcı\nVersion 1.0\nDeveloped by MMD"))

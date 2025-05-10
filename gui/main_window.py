@@ -49,7 +49,8 @@ class MainWindow:
             "select_all": self.select_all,
             "calculate": self.calculate,
             "badge_control": self.display_badge_data,
-            "preferences": self.show_preferences
+            "preferences": self.show_preferences,
+            "help_content": self.show_help
         }
         self.menu_builder = MenuBuilder(self.root, callbacks)
     
@@ -268,4 +269,10 @@ class MainWindow:
         """Display the preferences dialog."""
         from gui.preferences import PreferencesDialog, preferences
         dialog = PreferencesDialog(self.root, preferences)
+        dialog.show()
+
+    def show_help(self):
+        """Display the help content dialog."""
+        from gui.help import HelpDialog
+        dialog = HelpDialog(self.root)
         dialog.show()
