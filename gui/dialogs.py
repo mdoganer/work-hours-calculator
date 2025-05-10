@@ -37,25 +37,158 @@ class BadgeDataDialog:
             self.search_entry.pack(side=tk.LEFT, padx=5)
             self.search_entry.bind("<KeyRelease>", self.filter_records)
 
-        # Add a Treeview in the new window
-        columns = ("Sicil", "Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
-        self.tree = ttk.Treeview(self.window, columns=columns, show="headings", height=10)
-        self.tree.heading("Sicil", text="Sicil")
-        self.tree.heading("Tarih", text="Tarih")
-        self.tree.heading("Giriş", text="Giriş")
-        self.tree.heading("Çıkış", text="Çıkış")
-        self.tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
-        self.tree.pack(pady=10, fill="both", expand=True)
+        # Create an outer frame to hold the treeview and scrollbars
+        tree_frame = tk.Frame(self.window)
+        tree_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Add a refresh button below the table
-        refresh_button = tk.Button(self.window, text="Yenile", command=self.refresh_table)
-        refresh_button.pack(pady=5)
+        # Add a Treeview in the new window
+        if self.show_all:
+            columns = ("Sicil", "Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
+        else:
+            columns = ("Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
+            
+        self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings")
+        
+        # Configure columns
+        if self.show_all:
+            self.tree.heading("Sicil", text="Sicil")
+            self.tree.column("Sicil", width=80)
+            self.tree.heading("Tarih", text="Tarih")
+            self.tree.column("Tarih", width=100)
+            self.tree.heading("Giriş", text="Giriş")
+            self.tree.column("Giriş", width=80)
+            self.tree.heading("Çıkış", text="Çıkış")
+            self.tree.column("Çıkış", width=80)
+            self.tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
+            self.tree.column("Net Çalışma (Saat)", width=120)
+        else:
+            self.tree.heading("Tarih", text="Tarih")
+            self.tree.column("Tarih", width=100)
+            self.tree.heading("Giriş", text="Giriş")
+            self.tree.column("Giriş", width=80)
+            self.tree.heading("Çıkış", text="Çıkış")
+            self.tree.column("Çıkış", width=80)
+            self.tree.heading("Net Çalışma (Saat)", text="Net Çalışma (Saat)")
+            self.tree.column("Net Çalışma (Saat)", width=120)
+        
+        # Add scrollbars
+        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
+        hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        
+        # Grid layout for treeview with scrollbars
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        vsb.grid(row=0, column=1, sticky="ns")
+        hsb.grid(row=1, column=0, sticky="ew")
+        
+        # Make the treeview and frame expandable
+        tree_frame.grid_columnconfigure(0, weight=1)
+        tree_frame.grid_rowconfigure(0, weight=1)
+
+        # Create a frame for action buttons
+        buttons_frame = tk.Frame(self.window)
+        buttons_frame.pack(pady=5, fill="x")
+        
+        # Add a refresh button
+        refresh_button = tk.Button(buttons_frame, text="Yenile", command=self.refresh_table)
+        refresh_button.pack(side=tk.LEFT, padx=10)
+        
+        # Add delete button with default state disabled
+        self.delete_button = tk.Button(buttons_frame, text="Seçili Kaydı Sil", 
+                                      command=self.delete_selected, state=tk.DISABLED)
+        self.delete_button.pack(side=tk.LEFT, padx=10)
+        
+        # Bind selection event to enable/disable delete button
+        self.tree.bind("<<TreeviewSelect>>", self.on_select)
         
         # Set up window close event
         self.window.protocol("WM_DELETE_WINDOW", self._on_window_close)
         
+        # Add right-click context menu
+        self.create_context_menu()
+        
         # Initial population of the Treeview
         self.refresh_table()
+    
+    def create_context_menu(self):
+        """Create a context menu for right-click actions on rows."""
+        self.context_menu = tk.Menu(self.window, tearoff=0)
+        self.context_menu.add_command(label="Sil", command=self.delete_selected)
+        
+        # Bind right-click to show context menu
+        self.tree.bind("<Button-3>", self.show_context_menu)
+    
+    def show_context_menu(self, event):
+        """Show context menu on right-click."""
+        # Select the row that was right-clicked
+        item = self.tree.identify_row(event.y)
+        if item:
+            # Select the row
+            self.tree.selection_set(item)
+            # Show context menu
+            try:
+                self.context_menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                self.context_menu.grab_release()
+    
+    def on_select(self, event):
+        """Handle selection events in the Treeview."""
+        selected = self.tree.selection()
+        # Enable or disable delete button based on selection
+        if selected:
+            self.delete_button.config(state=tk.NORMAL)
+        else:
+            self.delete_button.config(state=tk.DISABLED)
+    
+    def delete_selected(self):
+        """Delete the selected record from the table and JSON file."""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        # Get the record data from the selected row
+        values = self.tree.item(selected[0], 'values')
+        
+        # Confirm deletion
+        if not messagebox.askyesno("Onay", "Seçili kaydı silmek istediğinizden emin misiniz?"):
+            return
+            
+        try:
+            # Get the record identifiers
+            if self.show_all:
+                sicil = values[0]  # Sicil is at index 0
+                tarih = values[1]  # Date is at index 1
+                giris = values[2]  # Entry time is at index 2
+                cikis = values[3]  # Exit time is at index 3
+            else:
+                sicil = self.badge_number
+                tarih = values[0]  # Date is at index 0
+                giris = values[1]  # Entry time is at index 1
+                cikis = values[2]  # Exit time is at index 2
+            
+            # Import delete_record function
+            from core.data import delete_record
+            
+            # Delete the record from JSON
+            success = delete_record(sicil, tarih, giris, cikis)
+            
+            if success:
+                # Remove from treeview
+                self.tree.delete(selected)
+                messagebox.showinfo("Başarılı", "Kayıt başarıyla silindi.")
+                
+                # If we're showing all records and have filtered, refresh all_records
+                if self.show_all and hasattr(self, 'all_records'):
+                    self.all_records = [r for r in self.all_records 
+                                     if not (r.get('sicil') == sicil and 
+                                             r.get('tarih') == tarih and 
+                                             r.get('giris') == giris and 
+                                             r.get('cikis') == cikis)]
+                    
+            else:
+                messagebox.showerror("Hata", "Kayıt silinemedi.")
+        except Exception as e:
+            messagebox.showerror("Hata", f"Kayıt silme sırasında bir hata oluştu:\n{e}")
     
     def _on_window_close(self):
         # Call the on_close callback if provided
@@ -82,6 +215,7 @@ class BadgeDataDialog:
             sicil = str(record.get("sicil", "")).lower()
             
             if not search_text or search_text in sicil:
+                # Insert with standard columns
                 self.tree.insert("", "end", values=(
                     record.get("sicil", ""),
                     record.get("tarih", ""), 
