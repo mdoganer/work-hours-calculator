@@ -13,8 +13,14 @@ class PreferencesManager:
         "language": "tr",  # Default language (Turkish)
         "rounding_algorithm": "standard",  # Standard 15-minute rounding
         "breaks": {
-            "lunch": {"start_time": "13:00", "end_time": "13:45", "enabled": True},
-            "dinner": {"start_time": "19:00", "end_time": "19:30", "enabled": True}
+            "weekday": {
+                "lunch": {"start_time": "13:00", "end_time": "13:45", "enabled": True},
+                "dinner": {"start_time": "19:00", "end_time": "19:30", "enabled": True}
+            },
+            "weekend": {
+                "lunch": {"start_time": "13:00", "end_time": "13:30", "enabled": True},
+                "dinner": {"start_time": "19:00", "end_time": "19:30", "enabled": True}
+            }
         }
     }
     
@@ -67,17 +73,40 @@ class PreferencesManager:
         self.preferences[key] = value
         return self.save_preferences()
         
-    def get_break_info(self, break_type):
-        """Get break information."""
+    def get_break_info(self, break_type, is_weekday=True):
+        """Get break information based on day type.
+        
+        Args:
+            break_type: Type of break (lunch or dinner)
+            is_weekday: True for weekday, False for weekend
+        """
+        day_type = "weekday" if is_weekday else "weekend"
         breaks = self.preferences.get("breaks", {})
-        return breaks.get(break_type, {})
+        day_breaks = breaks.get(day_type, {})
+        return day_breaks.get(break_type, {})
     
-    def set_break_info(self, break_type, start_time, end_time, enabled):
-        """Set break information."""
+    def set_break_info(self, break_type, start_time, end_time, enabled, is_weekday=True):
+        """Set break information for specific day type.
+        
+        Args:
+            break_type: Type of break (lunch or dinner)
+            start_time: Start time of break (HH:MM)
+            end_time: End time of break (HH:MM)
+            enabled: Whether break is enabled
+            is_weekday: True for weekday, False for weekend
+        """
+        day_type = "weekday" if is_weekday else "weekend"
+        
         if "breaks" not in self.preferences:
             self.preferences["breaks"] = {}
             
-        self.preferences["breaks"][break_type] = {
+        if day_type not in self.preferences["breaks"]:
+            self.preferences["breaks"][day_type] = {}
+            
+        if break_type not in self.preferences["breaks"][day_type]:
+            self.preferences["breaks"][day_type][break_type] = {}
+            
+        self.preferences["breaks"][day_type][break_type] = {
             "start_time": start_time,
             "end_time": end_time,
             "enabled": enabled
@@ -101,7 +130,7 @@ class PreferencesDialog:
         # Create a new window for preferences
         self.window = tk.Toplevel(self.parent)
         self.window.title("Tercihler")
-        self.window.geometry("500x500")
+        self.window.geometry("500x550")
         self.window.resizable(False, False)
         
         # Create a notebook (tabbed interface)
@@ -110,16 +139,19 @@ class PreferencesDialog:
         
         # Create tabs
         general_tab = ttk.Frame(notebook)
-        breaks_tab = ttk.Frame(notebook)
+        weekday_breaks_tab = ttk.Frame(notebook)
+        weekend_breaks_tab = ttk.Frame(notebook)
         
         notebook.add(general_tab, text="Genel")
-        notebook.add(breaks_tab, text="Molalar")
+        notebook.add(weekday_breaks_tab, text="Hafta İçi Molaları")
+        notebook.add(weekend_breaks_tab, text="Hafta Sonu Molaları")
         
         # Populate general tab
         self.setup_general_tab(general_tab)
         
-        # Populate breaks tab
-        self.setup_breaks_tab(breaks_tab)
+        # Populate breaks tabs
+        self.setup_breaks_tab(weekday_breaks_tab, is_weekday=True)
+        self.setup_breaks_tab(weekend_breaks_tab, is_weekday=False)
         
         # Create buttons at the bottom
         button_frame = tk.Frame(self.window)
@@ -158,6 +190,7 @@ class PreferencesDialog:
             "standard": "Standart (15 dakika)",
             "nearest_5": "En yakın 5 dakika",
             "nearest_10": "En yakın 10 dakika",
+            "nearest_30": "En yakın 30 dakika",  # New 30-minute rounding option
             "ceiling": "Yukarı yuvarlama (tavan)",
             "floor": "Aşağı yuvarlama (taban)"
         }
@@ -166,72 +199,104 @@ class PreferencesDialog:
             rb = tk.Radiobutton(round_frame, text=name, value=code, variable=self.round_var)
             rb.pack(anchor="w")
     
-    def setup_breaks_tab(self, tab):
+    def setup_breaks_tab(self, tab, is_weekday):
         """Set up the breaks configuration tab."""
+        day_type = "Hafta İçi" if is_weekday else "Hafta Sonu"
+        
         # Lunch break configuration
-        lunch_frame = tk.LabelFrame(tab, text="Öğle Molası", padx=10, pady=10)
+        lunch_frame = tk.LabelFrame(tab, text=f"{day_type} Öğle Molası", padx=10, pady=10)
         lunch_frame.pack(fill="x", padx=10, pady=10)
         
         # Get current lunch break settings
-        lunch_info = self.prefs.get_break_info("lunch")
+        lunch_info = self.prefs.get_break_info("lunch", is_weekday=is_weekday)
         lunch_enabled = lunch_info.get("enabled", True)
         lunch_start = lunch_info.get("start_time", "13:00")
-        lunch_end = lunch_info.get("end_time", "13:45")
+        lunch_end = lunch_info.get("end_time", "13:45" if is_weekday else "13:30")
         
         # Enabled checkbox
-        self.lunch_enabled_var = tk.BooleanVar(value=lunch_enabled)
-        lunch_cb = tk.Checkbutton(lunch_frame, text="Öğle Molasını Etkinleştir", 
-                                variable=self.lunch_enabled_var)
+        if is_weekday:
+            self.weekday_lunch_enabled_var = tk.BooleanVar(value=lunch_enabled)
+            lunch_cb = tk.Checkbutton(lunch_frame, text="Öğle Molasını Etkinleştir", 
+                                    variable=self.weekday_lunch_enabled_var)
+        else:
+            self.weekend_lunch_enabled_var = tk.BooleanVar(value=lunch_enabled)
+            lunch_cb = tk.Checkbutton(lunch_frame, text="Öğle Molasını Etkinleştir", 
+                                    variable=self.weekend_lunch_enabled_var)
         lunch_cb.grid(row=0, column=0, columnspan=2, sticky="w")
         
         # Start time
         tk.Label(lunch_frame, text="Başlangıç:").grid(row=1, column=0, sticky="w", pady=5)
-        self.lunch_start_var = tk.StringVar(value=lunch_start)
-        lunch_start_entry = tk.Entry(lunch_frame, textvariable=self.lunch_start_var, width=10)
+        if is_weekday:
+            self.weekday_lunch_start_var = tk.StringVar(value=lunch_start)
+            lunch_start_entry = tk.Entry(lunch_frame, textvariable=self.weekday_lunch_start_var, width=10)
+        else:
+            self.weekend_lunch_start_var = tk.StringVar(value=lunch_start)
+            lunch_start_entry = tk.Entry(lunch_frame, textvariable=self.weekend_lunch_start_var, width=10)
         lunch_start_entry.grid(row=1, column=1, sticky="w", padx=10)
         
         # End time
         tk.Label(lunch_frame, text="Bitiş:").grid(row=2, column=0, sticky="w", pady=5)
-        self.lunch_end_var = tk.StringVar(value=lunch_end)
-        lunch_end_entry = tk.Entry(lunch_frame, textvariable=self.lunch_end_var, width=10)
+        if is_weekday:
+            self.weekday_lunch_end_var = tk.StringVar(value=lunch_end)
+            lunch_end_entry = tk.Entry(lunch_frame, textvariable=self.weekday_lunch_end_var, width=10)
+        else:
+            self.weekend_lunch_end_var = tk.StringVar(value=lunch_end)
+            lunch_end_entry = tk.Entry(lunch_frame, textvariable=self.weekend_lunch_end_var, width=10)
         lunch_end_entry.grid(row=2, column=1, sticky="w", padx=10)
         
         # Dinner break configuration
-        dinner_frame = tk.LabelFrame(tab, text="Akşam Molası", padx=10, pady=10)
+        dinner_frame = tk.LabelFrame(tab, text=f"{day_type} Akşam Molası", padx=10, pady=10)
         dinner_frame.pack(fill="x", padx=10, pady=10)
         
         # Get current dinner break settings
-        dinner_info = self.prefs.get_break_info("dinner")
+        dinner_info = self.prefs.get_break_info("dinner", is_weekday=is_weekday)
         dinner_enabled = dinner_info.get("enabled", True)
         dinner_start = dinner_info.get("start_time", "19:00")
         dinner_end = dinner_info.get("end_time", "19:30")
         
         # Enabled checkbox
-        self.dinner_enabled_var = tk.BooleanVar(value=dinner_enabled)
-        dinner_cb = tk.Checkbutton(dinner_frame, text="Akşam Molasını Etkinleştir", 
-                                 variable=self.dinner_enabled_var)
+        if is_weekday:
+            self.weekday_dinner_enabled_var = tk.BooleanVar(value=dinner_enabled)
+            dinner_cb = tk.Checkbutton(dinner_frame, text="Akşam Molasını Etkinleştir", 
+                                     variable=self.weekday_dinner_enabled_var)
+        else:
+            self.weekend_dinner_enabled_var = tk.BooleanVar(value=dinner_enabled)
+            dinner_cb = tk.Checkbutton(dinner_frame, text="Akşam Molasını Etkinleştir", 
+                                     variable=self.weekend_dinner_enabled_var)
         dinner_cb.grid(row=0, column=0, columnspan=2, sticky="w")
         
         # Start time
         tk.Label(dinner_frame, text="Başlangıç:").grid(row=1, column=0, sticky="w", pady=5)
-        self.dinner_start_var = tk.StringVar(value=dinner_start)
-        dinner_start_entry = tk.Entry(dinner_frame, textvariable=self.dinner_start_var, width=10)
+        if is_weekday:
+            self.weekday_dinner_start_var = tk.StringVar(value=dinner_start)
+            dinner_start_entry = tk.Entry(dinner_frame, textvariable=self.weekday_dinner_start_var, width=10)
+        else:
+            self.weekend_dinner_start_var = tk.StringVar(value=dinner_start)
+            dinner_start_entry = tk.Entry(dinner_frame, textvariable=self.weekend_dinner_start_var, width=10)
         dinner_start_entry.grid(row=1, column=1, sticky="w", padx=10)
         
         # End time
         tk.Label(dinner_frame, text="Bitiş:").grid(row=2, column=0, sticky="w", pady=5)
-        self.dinner_end_var = tk.StringVar(value=dinner_end)
-        dinner_end_entry = tk.Entry(dinner_frame, textvariable=self.dinner_end_var, width=10)
+        if is_weekday:
+            self.weekday_dinner_end_var = tk.StringVar(value=dinner_end)
+            dinner_end_entry = tk.Entry(dinner_frame, textvariable=self.weekday_dinner_end_var, width=10)
+        else:
+            self.weekend_dinner_end_var = tk.StringVar(value=dinner_end)
+            dinner_end_entry = tk.Entry(dinner_frame, textvariable=self.weekend_dinner_end_var, width=10)
         dinner_end_entry.grid(row=2, column=1, sticky="w", padx=10)
     
     def save_preferences(self):
         """Save preferences and close the dialog."""
         # Validate time formats
         time_fields = {
-            "Öğle Molası Başlangıç": self.lunch_start_var.get(),
-            "Öğle Molası Bitiş": self.lunch_end_var.get(),
-            "Akşam Molası Başlangıç": self.dinner_start_var.get(),
-            "Akşam Molası Bitiş": self.dinner_end_var.get()
+            "Hafta İçi Öğle Molası Başlangıç": self.weekday_lunch_start_var.get(),
+            "Hafta İçi Öğle Molası Bitiş": self.weekday_lunch_end_var.get(),
+            "Hafta İçi Akşam Molası Başlangıç": self.weekday_dinner_start_var.get(),
+            "Hafta İçi Akşam Molası Bitiş": self.weekday_dinner_end_var.get(),
+            "Hafta Sonu Öğle Molası Başlangıç": self.weekend_lunch_start_var.get(),
+            "Hafta Sonu Öğle Molası Bitiş": self.weekend_lunch_end_var.get(),
+            "Hafta Sonu Akşam Molası Başlangıç": self.weekend_dinner_start_var.get(),
+            "Hafta Sonu Akşam Molası Bitiş": self.weekend_dinner_end_var.get()
         }
         
         # Validate time format (HH:MM)
@@ -246,19 +311,38 @@ class PreferencesDialog:
         self.prefs.set("language", self.lang_var.get())
         self.prefs.set("rounding_algorithm", self.round_var.get())
         
-        # Save break settings
+        # Save weekday break settings
         self.prefs.set_break_info(
             "lunch",
-            self.lunch_start_var.get(),
-            self.lunch_end_var.get(),
-            self.lunch_enabled_var.get()
+            self.weekday_lunch_start_var.get(),
+            self.weekday_lunch_end_var.get(),
+            self.weekday_lunch_enabled_var.get(),
+            is_weekday=True
         )
         
         self.prefs.set_break_info(
             "dinner",
-            self.dinner_start_var.get(),
-            self.dinner_end_var.get(),
-            self.dinner_enabled_var.get()
+            self.weekday_dinner_start_var.get(),
+            self.weekday_dinner_end_var.get(),
+            self.weekday_dinner_enabled_var.get(),
+            is_weekday=True
+        )
+        
+        # Save weekend break settings
+        self.prefs.set_break_info(
+            "lunch",
+            self.weekend_lunch_start_var.get(),
+            self.weekend_lunch_end_var.get(),
+            self.weekend_lunch_enabled_var.get(),
+            is_weekday=False
+        )
+        
+        self.prefs.set_break_info(
+            "dinner",
+            self.weekend_dinner_start_var.get(),
+            self.weekend_dinner_end_var.get(),
+            self.weekend_dinner_enabled_var.get(),
+            is_weekday=False
         )
         
         # Inform user and close window

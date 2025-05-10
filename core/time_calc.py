@@ -36,6 +36,19 @@ def round_time(dt):
             
         return dt.replace(minute=minutes, second=0, microsecond=0)
     
+    elif algorithm == "nearest_30":
+        # Round to nearest 30 minutes
+        minutes = dt.minute
+        if minutes < 15:
+            minutes = 0
+        elif minutes < 45:
+            minutes = 30
+        else:
+            dt += timedelta(hours=1)
+            minutes = 0
+            
+        return dt.replace(minute=minutes, second=0, microsecond=0)
+    
     elif algorithm == "ceiling":
         # Round up to next 15 minutes
         minute = dt.minute
@@ -56,7 +69,7 @@ def round_time(dt):
         minute -= remainder
         return dt.replace(minute=minute, second=0, microsecond=0)
     
-    elif algorithm == "standard":
+    else:
         # Standard rounding (15-minute intervals)
         minute = dt.minute
         if minute < 8:
@@ -80,9 +93,9 @@ def calculate_work_hours(entry_time, exit_time, is_weekday, data_cache):
 
     lunch_duration = timedelta()
     
-    # Get break settings from preferences
-    lunch_info = preferences.get_break_info("lunch")
-    dinner_info = preferences.get_break_info("dinner")
+    # Get break settings from preferences for the appropriate day type
+    lunch_info = preferences.get_break_info("lunch", is_weekday=is_weekday)
+    dinner_info = preferences.get_break_info("dinner", is_weekday=is_weekday)
     
     # Parse lunch break time
     if lunch_info.get("enabled", True):
@@ -90,30 +103,18 @@ def calculate_work_hours(entry_time, exit_time, is_weekday, data_cache):
         lunch_hour, lunch_minute = map(int, lunch_time_str.split(":"))
         lunch_break = datetime(entry_dt.year, entry_dt.month, entry_dt.day, lunch_hour, lunch_minute)
         
-        # Determine lunch break duration based on weekday/weekend
+        # Check if lunch break falls within the work period
         if entry_dt <= lunch_break < exit_dt:
-            if is_weekday:
-                # Get duration from end time - start time or use default
-                try:
-                    end_time_str = lunch_info.get("end_time", "13:45")
-                    end_h, end_m = map(int, end_time_str.split(":"))
-                    end_time = datetime(lunch_break.year, lunch_break.month, lunch_break.day, end_h, end_m)
-                    duration = (end_time - lunch_break).total_seconds() / 60
-                    lunch_duration += timedelta(minutes=duration)
-                except:
-                    # Fallback to default if there's an error
-                    lunch_duration += timedelta(minutes=45)
-            else:
-                # Weekend lunch break is typically shorter
-                try:
-                    end_time_str = lunch_info.get("end_time", "13:30")
-                    end_h, end_m = map(int, end_time_str.split(":"))
-                    end_time = datetime(lunch_break.year, lunch_break.month, lunch_break.day, end_h, end_m)
-                    duration = (end_time - lunch_break).total_seconds() / 60
-                    lunch_duration += timedelta(minutes=duration)
-                except:
-                    # Fallback to default if there's an error
-                    lunch_duration += timedelta(minutes=30)
+            try:
+                end_time_str = lunch_info.get("end_time", "13:45" if is_weekday else "13:30")
+                end_h, end_m = map(int, end_time_str.split(":"))
+                end_time = datetime(lunch_break.year, lunch_break.month, lunch_break.day, end_h, end_m)
+                duration = (end_time - lunch_break).total_seconds() / 60
+                lunch_duration += timedelta(minutes=duration)
+            except:
+                # Fallback to default if there's an error
+                default_duration = 45 if is_weekday else 30
+                lunch_duration += timedelta(minutes=default_duration)
 
     # Parse dinner break time
     if dinner_info.get("enabled", True):
@@ -121,8 +122,8 @@ def calculate_work_hours(entry_time, exit_time, is_weekday, data_cache):
         dinner_hour, dinner_minute = map(int, dinner_time_str.split(":"))
         dinner_break = datetime(entry_dt.year, entry_dt.month, entry_dt.day, dinner_hour, dinner_minute)
         
+        # Check if dinner break falls within the work period
         if entry_dt <= dinner_break < exit_dt:
-            # Get duration from end time - start time or use default
             try:
                 end_time_str = dinner_info.get("end_time", "19:30")
                 end_h, end_m = map(int, end_time_str.split(":"))
