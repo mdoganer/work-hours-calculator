@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog
 from datetime import datetime
+import json
 import os
 from gui.widgets import UndoRedoEntry
 from gui.menu import MenuBuilder
@@ -200,15 +201,12 @@ class MainWindow:
             # If the window doesn't exist anymore, clear the reference
             self.badge_dialog = None
             
-        # No active dialog, proceed to create a new one
-        badge_number = simpledialog.askstring("Sicil Numarası", "Lütfen sicil numarasını girin:")
-        if not badge_number:
-            return
-        
         # Create callback function to clear dialog reference when window closes
         def on_dialog_close():
             self.badge_dialog = None
             
+        # Use a default badge number - no prompt needed
+        badge_number = "tüm kayıtlar"  # Or any other default value you prefer
         self.badge_dialog = BadgeDataDialog(self.root, badge_number, load_records, on_close=on_dialog_close)
         self.badge_dialog.show()
 

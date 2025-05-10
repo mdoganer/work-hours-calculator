@@ -11,6 +11,7 @@ class BadgeDataDialog:
         self.data_provider = data_provider
         self.window = None
         self.on_close = on_close
+        self.show_all = badge_number == "tüm kayıtlar"  # Check if we should show all records
         
     def show(self):
         # If window already exists, bring it to front
@@ -20,12 +21,26 @@ class BadgeDataDialog:
             
         # Create a new window for the control table
         self.window = tk.Toplevel(self.parent)
-        self.window.title(f"Sicil Numarası: {self.badge_number}")
+        if self.show_all:
+            self.window.title("Sicil Kontrol")
+        else:
+            self.window.title(f"Sicil Numarası: {self.badge_number}")
         self.window.geometry("900x600")
 
+        # Add a search frame if we're showing all records
+        if self.show_all:
+            search_frame = tk.Frame(self.window)
+            search_frame.pack(fill="x", padx=10, pady=5)
+            
+            tk.Label(search_frame, text="Sicil Ara:").pack(side=tk.LEFT, padx=5)
+            self.search_entry = tk.Entry(search_frame, width=15)
+            self.search_entry.pack(side=tk.LEFT, padx=5)
+            self.search_entry.bind("<KeyRelease>", self.filter_records)
+
         # Add a Treeview in the new window
-        columns = ("Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
+        columns = ("Sicil", "Tarih", "Giriş", "Çıkış", "Net Çalışma (Saat)")
         self.tree = ttk.Treeview(self.window, columns=columns, show="headings", height=10)
+        self.tree.heading("Sicil", text="Sicil")
         self.tree.heading("Tarih", text="Tarih")
         self.tree.heading("Giriş", text="Giriş")
         self.tree.heading("Çıkış", text="Çıkış")
@@ -50,12 +65,41 @@ class BadgeDataDialog:
         if self.window:
             self.window.destroy()
             self.window = None
+    
+    def filter_records(self, event=None):
+        # Filter records based on search text
+        if not hasattr(self, 'search_entry') or not hasattr(self, 'all_records'):
+            return
+            
+        search_text = self.search_entry.get().strip().lower()
+        
+        # Clear the existing rows in the Treeview
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        
+        # Filter and re-insert records
+        for record in self.all_records:
+            sicil = str(record.get("sicil", "")).lower()
+            
+            if not search_text or search_text in sicil:
+                self.tree.insert("", "end", values=(
+                    record.get("sicil", ""),
+                    record.get("tarih", ""), 
+                    record.get("giris", ""), 
+                    record.get("cikis", ""), 
+                    record.get("net_calisma", "")
+                ))
         
     def refresh_table(self):
         try:
             # Fetch the latest data from the JSON file
             data = self.data_provider()
-            filtered_data = filter_by_badge(data, self.badge_number)
+            
+            if self.show_all:
+                filtered_data = data  # Show all records
+                self.all_records = data  # Store for filtering
+            else:
+                filtered_data = filter_by_badge(data, self.badge_number)
 
             # Clear the existing rows in the Treeview
             for row in self.tree.get_children():
@@ -63,15 +107,26 @@ class BadgeDataDialog:
 
             # Re-insert the filtered data
             for record in filtered_data:
-                self.tree.insert("", "end", values=(
-                    record["tarih"], 
-                    record["giris"], 
-                    record["cikis"], 
-                    record["net_calisma"]
-                ))
+                if self.show_all:
+                    # When showing all, include badge number column
+                    self.tree.insert("", "end", values=(
+                        record.get("sicil", ""),
+                        record.get("tarih", ""), 
+                        record.get("giris", ""), 
+                        record.get("cikis", ""), 
+                        record.get("net_calisma", "")
+                    ))
+                else:
+                    # For specific badge, don't include badge number column
+                    self.tree.insert("", "end", values=(
+                        record.get("tarih", ""), 
+                        record.get("giris", ""), 
+                        record.get("cikis", ""), 
+                        record.get("net_calisma", "")
+                    ))
 
             # Show a message if no data is found
-            if not filtered_data:
+            if not filtered_data and not self.show_all:
                 messagebox.showinfo("Bilgi", f"Sicil Numarası {self.badge_number} için kayıt bulunamadı.")
                 
         except Exception as e:
