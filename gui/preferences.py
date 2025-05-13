@@ -197,7 +197,7 @@ class PreferencesDialog:
             rb.pack(anchor="w")
         
         # Working Records File Path selection
-        file_path_frame = tk.LabelFrame(tab, text=_("file_path", "Records File Path"), padx=10, pady=10)
+        file_path_frame = tk.LabelFrame(tab, text=_("file_path"), padx=10, pady=10)
         file_path_frame.pack(fill="x", padx=10, pady=10)
         
         # Get current file path
@@ -213,11 +213,11 @@ class PreferencesDialog:
         file_path_entry.pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 5))
         
         # Browse button
-        browse_button = tk.Button(file_display_frame, text=_("browse", "Browse..."), command=self.browse_file)
+        browse_button = tk.Button(file_display_frame, text=_("browse"), command=self.browse_file)
         browse_button.pack(side=tk.LEFT)
         
         # Reset to default button
-        reset_button = tk.Button(file_path_frame, text=_("reset_to_default", "Reset to Default"), command=self.reset_file_path)
+        reset_button = tk.Button(file_path_frame, text=_("reset_to_default"), command=self.reset_file_path)
         reset_button.pack(anchor="e", pady=5)
         
         # Rounding algorithm selection
@@ -245,8 +245,8 @@ class PreferencesDialog:
         
         file_path = filedialog.asksaveasfilename(
             defaultextension=".json",
-            filetypes=[(_("json_files", "JSON files"), "*.json"), (_("all_files", "All files"), "*.*")],
-            title=_("select_record_file", "Select Records File")
+            filetypes=[(_("json_files"), "*.json"), (_("all_files"), "*.*")],
+            title=_("select_record_file")
         )
         
         if file_path:  # If a file was selected (not cancelled)

@@ -15,7 +15,7 @@ from utils.languages import _
 class MainWindow:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title(_("app_title", "Çalışma Süresi Hesaplayıcı"))
+        self.root.title(_("app_title"))
         self.root.geometry("600x400")
         
         # Data cache for entry, exit times
@@ -58,30 +58,30 @@ class MainWindow:
     def setup_interface(self):
         """Setup the main interface components."""
         # Input fields
-        tk.Label(self.root, text=_("entry_time_label", "Giriş Saati (HH:MM):"), font=("Helvetica", 11, "bold")).pack(pady=5)
+        tk.Label(self.root, text=_("entry_time_label"), font=("Helvetica", 11, "bold")).pack(pady=5)
         self.entry_input = UndoRedoEntry(self.root)
         self.entry_input.pack(pady=5)
 
-        tk.Label(self.root, text=_("exit_time_label", "Çıkış Saati (HH:MM):"), font=("Helvetica", 11, "bold")).pack(pady=5)
+        tk.Label(self.root, text=_("exit_time_label"), font=("Helvetica", 11, "bold")).pack(pady=5)
         self.exit_input = UndoRedoEntry(self.root)
         self.exit_input.pack(pady=5)
 
         # Radio buttons for weekday/weekend
-        self.weekday_var = tk.StringVar(value=_("weekday", "Hafta İçi"))
-        tk.Radiobutton(self.root, text=_("weekday", "Hafta İçi"), variable=self.weekday_var, value=_("weekday", "Hafta İçi")).pack()
-        tk.Radiobutton(self.root, text=_("weekend", "Hafta Sonu"), variable=self.weekday_var, value=_("weekend", "Hafta Sonu")).pack()
+        self.weekday_var = tk.StringVar(value=_("weekday"))
+        tk.Radiobutton(self.root, text=_("weekday"), variable=self.weekday_var, value=_("weekday")).pack()
+        tk.Radiobutton(self.root, text=_("weekend"), variable=self.weekday_var, value=_("weekend")).pack()
 
         # Button frame for aligning buttons in a single row
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
 
-        calculate_button = tk.Button(button_frame, text=_("button_calculate", "Hesapla"), command=self.calculate)
+        calculate_button = tk.Button(button_frame, text=_("button_calculate"), command=self.calculate)
         calculate_button.grid(row=0, column=0, padx=10)
 
-        save_button = tk.Button(button_frame, text=_("button_save", "Kaydet"), command=self.save_json)
+        save_button = tk.Button(button_frame, text=_("button_save"), command=self.save_json)
         save_button.grid(row=0, column=1, padx=10)
 
-        control_button = tk.Button(button_frame, text=_("button_badge_control", "Sicil Kontrol"), command=self.display_badge_data)
+        control_button = tk.Button(button_frame, text=_("button_badge_control"), command=self.display_badge_data)
         control_button.grid(row=0, column=2, padx=10)
 
         # Result label
@@ -89,7 +89,7 @@ class MainWindow:
         self.result_label.pack(pady=10)
 
         # Footer
-        footer = tk.Label(self.root, text=_("footer_text", "Developed by MMD"), font=("Arial", 8), fg="gray")
+        footer = tk.Label(self.root, text=_("footer_text"), font=("Arial", 8), fg="gray")
         footer.pack(side="bottom", pady=5)
     
     def setup_keyboard_shortcuts(self):
@@ -112,7 +112,7 @@ class MainWindow:
             if isinstance(widget, UndoRedoEntry):
                 widget.undo()
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_undo', 'Geri alma sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_undo')}\n{e}")
 
     def redo(self):
         try:
@@ -120,7 +120,7 @@ class MainWindow:
             if isinstance(widget, UndoRedoEntry):
                 widget.redo()
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_redo', 'Yineleme sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_redo')}\n{e}")
 
     def cut(self):
         try:
@@ -128,7 +128,7 @@ class MainWindow:
             if isinstance(widget, tk.Entry):
                 widget.event_generate("<<Cut>>")
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_cut', 'Kesme sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_cut')}\n{e}")
 
     def copy(self):
         try:
@@ -136,7 +136,7 @@ class MainWindow:
             if isinstance(widget, tk.Entry):
                 widget.event_generate("<<Copy>>")
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_copy', 'Kopyalama sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_copy')}\n{e}")
 
     def paste(self):
         try:
@@ -144,7 +144,7 @@ class MainWindow:
             if isinstance(widget, tk.Entry):
                 widget.event_generate("<<Paste>>")
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_paste', 'Yapıştırma sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_paste')}\n{e}")
 
     def select_all(self):
         try:
@@ -153,36 +153,35 @@ class MainWindow:
                 widget.select_range(0, 'end')
                 widget.icursor('end')
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_select_all', 'Tümünü seçme sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_select_all')}\n{e}")
     
     # Action functions
     def calculate(self):
         try:
             entry = self.entry_input.get()
             exit = self.exit_input.get()
-            is_weekday = self.weekday_var.get() == _("weekday", "Hafta İçi")
+            is_weekday = self.weekday_var.get() == _("weekday")
             rounded_entry = round_time(datetime.strptime(entry, "%H:%M"))
             rounded_exit = round_time(datetime.strptime(exit, "%H:%M"))
             
             sonuc = calculate_work_hours(entry, exit, is_weekday, self.data_cache)
             self.result_label.config(
-                text=f"{_('net_work_time', 'Net Çalışma Süresi:')} {sonuc}\n"
-                     f"{_('rounded_entry', 'Giriş (yuvarlanmış):')} {rounded_entry.strftime('%H:%M')}\n"
-                     f"{_('rounded_exit', 'Çıkış (yuvarlanmış):')} {rounded_exit.strftime('%H:%M')}"
+                text=f"{_('net_work_time')} {sonuc}\n"
+                     f"{_('rounded_entry')} {rounded_entry.strftime('%H:%M')}\n"
+                     f"{_('rounded_exit')} {rounded_exit.strftime('%H:%M')}"
             )
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('invalid_time', 'Geçersiz giriş:')} {e}")
+            messagebox.showerror(_("error"), f"{_('invalid_time')} {e}")
 
     def save_json(self):
         try:
             if not self.data_cache["entry"] or not self.data_cache["exit"] or not self.data_cache["net_duration"]:
-                messagebox.showwarning(_("warning", "Uyarı"), _("calculate_first", "Lütfen önce HESAPLA butonuna basın."))
+                messagebox.showwarning(_("warning"), _("calculate_first"))
                 return
                 
-            sicil_no = simpledialog.askstring(_("badge_number_prompt", "Sicil Numarası"), 
-                                             _("badge_number_prompt", "Sicil numaranızı giriniz:"))
+            sicil_no = simpledialog.askstring(_("badge_number_prompt"), _("badge_number_prompt"))
             if not sicil_no:
-                messagebox.showinfo(_("info", "Bilgi"), _("record_cancelled", "Kayıt iptal edildi."))
+                messagebox.showinfo(_("info"), _("record_cancelled"))
                 return
             
             # Use current_file_path if it exists, otherwise use default
@@ -191,10 +190,9 @@ class MainWindow:
             else:
                 file_path = save_record(sicil_no, self.data_cache)
             
-            messagebox.showinfo(_("success", "Başarılı"), 
-                               f"{_('record_success', 'Kayıt başarıyla yapıldı.')}\n{_('file_path', 'Dosya Yolu:')} {file_path}")
+            messagebox.showinfo(_("success"), f"{_('record_success')}\n{_('file_path')} {file_path}")
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_save', 'Kayıt sırasında bir hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_save')}\n{e}")
 
     def display_badge_data(self):
         # Check if we already have an active badge dialog
@@ -211,7 +209,7 @@ class MainWindow:
             self.badge_dialog = None
             
         # Use a default badge number - no prompt needed
-        badge_number = _("all_records", "tüm kayıtlar")  # Or any other default value you prefer
+        badge_number = _("all_records")
         self.badge_dialog = BadgeDataDialog(self.root, badge_number, load_records, on_close=on_dialog_close)
         self.badge_dialog.show()
 
@@ -219,8 +217,8 @@ class MainWindow:
         try:
             file_path = filedialog.asksaveasfilename(
                 defaultextension=".json",
-                filetypes=[(_("json_files", "JSON files"), "*.json"), (_("all_files", "All files"), "*.*")],
-                title=_("create_new_json", "Create New JSON File")
+                filetypes=[(_("json_files"), "*.json"), (_("all_files"), "*.*")],
+                title=_("create_new_json")
             )
             
             if not file_path:  # User cancelled the dialog
@@ -234,18 +232,18 @@ class MainWindow:
             # Store the current file path and update window title
             self.current_file_path = file_path
             file_name = os.path.basename(file_path)
-            self.root.title(f"{_('app_title', 'Çalışma Süresi Hesaplayıcı')} - {file_name}")
+            self.root.title(f"{_('app_title')} - {file_name}")
             
-            messagebox.showinfo(_("success", "Başarılı"), f"{_('file_created', 'Yeni dosya oluşturuldu:')}\n{file_path}")
+            messagebox.showinfo(_("success"), f"{_('file_created')}\n{file_path}")
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_file_create', 'Dosya oluşturulurken hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_file_create')}\n{e}")
 
     def open_file(self):
         try:
             file_path = filedialog.askopenfilename(
                 defaultextension=".json",
-                filetypes=[(_("json_files", "JSON files"), "*.json"), (_("all_files", "All files"), "*.*")],
-                title=_("open_json", "Open JSON File")
+                filetypes=[(_("json_files"), "*.json"), (_("all_files"), "*.*")],
+                title=_("open_json")
             )
             
             if not file_path:  # User cancelled the dialog
@@ -259,14 +257,14 @@ class MainWindow:
             # Store the current file path and update window title
             self.current_file_path = file_path
             file_name = os.path.basename(file_path)
-            self.root.title(f"{_('app_title', 'Çalışma Süresi Hesaplayıcı')} - {file_name}")
+            self.root.title(f"{_('app_title')} - {file_name}")
             
             dialog = JsonDataDialog(self.root, data, file_path)
             dialog.show()
         except json.JSONDecodeError:
-            messagebox.showerror(_("error", "Hata"), _("invalid_json", "Geçersiz JSON dosyası."))
+            messagebox.showerror(_("error"), _("invalid_json"))
         except Exception as e:
-            messagebox.showerror(_("error", "Hata"), f"{_('error_file_open', 'Dosya açılırken hata oluştu:')}\n{e}")
+            messagebox.showerror(_("error"), f"{_('error_file_open')}\n{e}")
 
     def show_preferences(self):
         """Display the preferences dialog."""

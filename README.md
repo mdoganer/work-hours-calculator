@@ -30,19 +30,26 @@ The **Work Hours Calculator** is a Python application designed to help you track
 2. Use the graphical interface to clock in, clock out, and view your work hours.
 
 ## Build Your App Executable
-To create an executable version of the application, you can use `pyinstaller`. Follow these steps: 
+To create an executable version of the application with proper language support, use the included build script:
 
-1. Install `pyinstaller`:
+1. Install `pyinstaller` if you haven't already:
    ```bash
    pip install pyinstaller
    ```
 
-2. Build the executable:
+2. Run the build script:
    ```bash
-   pyinstaller --onefile --windowed app.py
+   python build.py
    ```
+   
+   This script will:
+   - Generate a PyInstaller spec file with proper language file inclusion
+   - Build the application with all necessary resources
+   - Place the final executable in the `dist` directory
 
-3. After the build process completes, you can find the executable file in the `dist` directory.
+3. The executable will be available in the `dist` directory.
+
+> **Note**: The build script ensures that language files are properly included in the executable, which is necessary for the application to function correctly.
 
 ## Contributing
 Contributions are welcome! To contribute:
